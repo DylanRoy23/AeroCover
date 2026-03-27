@@ -11,8 +11,8 @@ from aerocover.env_adapters.mpe_state import reconstruct_positions, discretize_s
 def all_joint_actions(n_agents: int, per_agent_actions: int = 5):
     return list(product(range(per_agent_actions), repeat=n_agents))
 
-def action_tuple_to_dict(agents: List[str], a: Tuple[int, ...]) -> Dict[str, int]:
-    return {agent: int(a[i]) for i, agent in enumerate(agents)}
+def action_tuple_to_dict(agents: List[str], a: Tuple) -> Dict:
+    return {agent: a[i] for i, agent in enumerate(agents)}
 
 def policy_from_state_action_map(
     policy: Dict[MDPState, Tuple[int, ...]],

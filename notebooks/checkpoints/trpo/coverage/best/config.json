@@ -1,0 +1,18 @@
+{
+  "total_timesteps": 1000000,
+  "gamma": 0.95,
+  "lr": 0.001,
+  "n_steps": 128,
+  "gae_lambda": 0.95,
+  "cg_max_steps": 15,
+  "target_kl": 0.01,
+  "net_arch_pi": [
+    128,
+    128
+  ],
+  "net_arch_vf": [
+    128,
+    128
+  ],
+  "seed": 42
+}

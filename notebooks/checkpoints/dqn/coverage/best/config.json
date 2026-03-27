@@ -1,0 +1,16 @@
+{
+  "total_timesteps": 1000000,
+  "gamma": 0.95,
+  "lr": 0.001,
+  "batch_size": 256,
+  "buffer_size": 200000,
+  "learning_starts": 1000,
+  "target_update_interval": 500,
+  "exploration_fraction": 0.3,
+  "exploration_final_eps": 0.05,
+  "net_arch": [
+    128,
+    128
+  ],
+  "seed": 42
+}

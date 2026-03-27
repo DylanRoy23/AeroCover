@@ -1,0 +1,22 @@
+{
+  "total_timesteps": 1000000,
+  "gamma": 0.95,
+  "lr": 0.0003,
+  "n_steps": 128,
+  "batch_size": 256,
+  "n_epochs": 4,
+  "clip_range": 0.2,
+  "gae_lambda": 0.95,
+  "ent_coef": 0.01,
+  "vf_coef": 0.5,
+  "max_grad_norm": 0.5,
+  "net_arch_pi": [
+    128,
+    128
+  ],
+  "net_arch_vf": [
+    128,
+    128
+  ],
+  "seed": 42
+}
