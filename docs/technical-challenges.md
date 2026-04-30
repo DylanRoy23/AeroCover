@@ -1,4 +1,4 @@
-# Technical Challenges & Surprises
+# Technical Challenges & Surprises V2
 
 ## Bugs
 - SuperSuit + SB3 `VecEnvWrapper.seed` incompatibility so it required monkey-patch
@@ -16,3 +16,6 @@
 ## Stuck Points
 - Reward shaping took significant iteration because initial coverage-only reward gave no learning signal for any method
 - Getting SB3 to work with PettingZoo required SuperSuit wrappers + CoverageRewardWrapper that properly implements BaseParallelWrapper
+
+
+# Technical Challenges & Surprises Final 
