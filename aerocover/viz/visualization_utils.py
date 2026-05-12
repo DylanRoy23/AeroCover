@@ -5,6 +5,156 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from aerocover.env_adapters.mpe_state import MDPState
 
+
+OBS_LABELS = [
+    "vel_x", "vel_y", "pos_x", "pos_y",
+    "lm1_x", "lm1_y", "lm2_x", "lm2_y",
+    "agent_x", "agent_y",
+]
+
+GROUP_LABELS = ["Velocity", "Position", "Landmark", "Other Agent"]
+
+GROUP_SLICES = [
+    slice(0, 2),
+    slice(2, 4),
+    slice(4, 8),
+    slice(8, 10),
+]
+
+
+def plot_saliency_heatmap(saliency_results, obs_labels=None):
+    labels = obs_labels or OBS_LABELS
+    methods = list(saliency_results.keys())
+
+    sal_matrix = np.stack([saliency_results[method] for method in methods])
+    sal_normed = sal_matrix / (sal_matrix.max(axis=1, keepdims=True) + 1e-8)
+
+    fig, ax = plt.subplots(figsize=(12, max(4, len(methods) * 0.7)))
+    im = ax.imshow(sal_normed, aspect="auto", cmap="YlOrRd")
+
+    ax.set_xticks(range(len(labels)))
+    ax.set_xticklabels(labels, rotation=45, ha="right")
+    ax.set_yticks(range(len(methods)))
+    ax.set_yticklabels(methods)
+    ax.set_title("Saliency Map: Feature Importance by Method", fontweight="bold", pad=15)
+
+    plt.colorbar(im, ax=ax, label="Normalized |grad|")
+    for i in range(len(methods)):
+        for j in range(len(labels)):
+            val = sal_normed[i, j]
+            ax.text(
+                j,
+                i,
+                f"{val:.2f}",
+                ha="center",
+                va="center",
+                fontsize=8,
+                color="white" if val > 0.7 else "black",
+            )
+
+    plt.tight_layout()
+    return ax
+
+
+def plot_grouped_importance(
+    saliency_results,
+    group_labels=None,
+    group_slices=None,
+):
+    labels = group_labels or GROUP_LABELS
+    slices = group_slices or GROUP_SLICES
+    methods = list(saliency_results.keys())
+
+    fig, ax = plt.subplots(figsize=(10, 5))
+    x = np.arange(len(labels))
+    width = 0.8 / len(methods)
+
+    for i, name in enumerate(methods):
+        grouped = [saliency_results[name][s].mean() for s in slices]
+        total = sum(grouped)
+        grouped = [(value / total) * 100 for value in grouped]
+
+        ax.bar(
+            x + i * width,
+            grouped,
+            width,
+            label=name,
+            alpha=0.85,
+        )
+
+    ax.set_xticks(x + width * len(methods) / 2)
+    ax.set_xticklabels(labels)
+    ax.set_ylabel("Relative Importance (%)")
+    ax.set_title("Feature Group Importance by Method", fontweight="bold")
+    ax.legend(ncol=min(len(methods), 5), fontsize=8)
+    ax.grid(True, axis="y", alpha=0.3)
+
+    plt.tight_layout()
+    return ax
+
+
+def plot_learning_curves(
+    results: Dict[str, List[float]],
+    window: int = 50,
+    figsize=(16, 5),
+):
+    n_methods = len(results)
+    fig, axes = plt.subplots(
+        1,
+        n_methods,
+        figsize=figsize,
+        sharey=True,
+    )
+
+    if n_methods == 1:
+        axes = [axes]
+
+    for ax, (name, returns) in zip(axes, results.items()):
+        ax.plot(returns, alpha=0.15, color="steelblue")
+
+        if len(returns) >= window:
+            kernel = np.ones(window) / window
+            smoothed = np.convolve(returns, kernel, mode="valid")
+            x_vals = range(window - 1, len(returns))
+            ax.plot(x_vals, smoothed, color="darkblue", linewidth=2)
+
+        ax.set_title(name, fontweight="bold")
+        ax.set_xlabel("Episode")
+        ax.grid(True, alpha=0.3)
+
+    axes[0].set_ylabel("Reward")
+    plt.suptitle("Training Reward Curves", fontsize=14, fontweight="bold")
+    plt.tight_layout()
+    return fig
+
+
+def plot_coverage_comparison_v2(
+    results: Dict[str, List[int]],
+    n_landmarks: int = 2,
+    ax=None,
+):
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(12, 5))
+
+    for name, coverage in results.items():
+        ax.plot(coverage, label=name, linewidth=2)
+
+    ax.axhline(
+        n_landmarks,
+        linestyle="--",
+        color="green",
+        alpha=0.5,
+        label="Full",
+    )
+
+    ax.set_xlabel("Step")
+    ax.set_ylabel("Covered")
+    ax.set_title("Coverage Over Time")
+    ax.legend()
+    ax.grid(True, alpha=0.3)
+    return ax
+
+
 def plot_value_function_heatmap(
     mdp,
     grid_size: int = 7,

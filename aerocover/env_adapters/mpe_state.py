@@ -33,30 +33,36 @@ def unpack_obs(obs: np.ndarray, n_landmarks: int, n_agents: int) -> Tuple[np.nda
     start = 4
     lm_rel = obs[start : start + 2 * n_landmarks]
     start += 2 * n_landmarks
-    other_rel = obs[start : start + 2 * (n_agents - 1)] if n_agents > 1 else np.array([])
+    n_others = max(0, n_agents - 1)
+    other_rel = obs[start : start + 2 * n_others]
     return self_pos, lm_rel, other_rel
 
 def reconstruct_positions(obs_dict: Dict[str, np.ndarray], n_landmarks: int, n_agents: int):
     agents = sorted(obs_dict.keys())
     a0 = agents[0]
-    a1 = agents[1] if len(agents) > 1 else None
-
-    a0_pos, a0_lm_rel, a0_other_rel = unpack_obs(obs_dict[a0], n_landmarks, n_agents)
+    a0_self_pos, a0_lm_rel, a0_other_rel = unpack_obs(
+        obs_dict[a0], n_landmarks, n_agents,
+    )
 
     landmarks: List[np.ndarray] = []
     for i in range(n_landmarks):
         rel = a0_lm_rel[2 * i : 2 * i + 2]
-        landmarks.append(a0_pos + rel)
+        landmarks.append(a0_self_pos + rel)
 
-    agent_pos: Dict[str, np.ndarray] = {a0: a0_pos.copy()}
+    # Reconstruct all agent positions.
+    agent_pos: Dict[str, np.ndarray] = {a0: a0_self_pos.copy()}
+    for k in range(1, n_agents):
+        rel_idx = 2 * (k - 1)
+        if a0_other_rel.size >= rel_idx + 2:
+            other_pos = a0_self_pos + a0_other_rel[rel_idx : rel_idx + 2]
+        else:
+            other_self_pos, _, _ = unpack_obs(
+                obs_dict[agents[k]], n_landmarks, n_agents,
+            )
+            other_pos = other_self_pos.copy()
+        agent_pos[agents[k]] = other_pos
 
-    if n_agents == 2 and a1 is not None and a0_other_rel.size >= 2:
-        agent_pos[a1] = a0_pos + a0_other_rel[:2]
-    elif a1 is not None:
-        a1_pos, _, _ = unpack_obs(obs_dict[a1], n_landmarks, n_agents)
-        agent_pos[a1] = a1_pos.copy()
-
-    for k in list(agent_pos.keys()):
+    for k in agent_pos:
         agent_pos[k] = clamp_vec(agent_pos[k])
 
     landmarks = [clamp_vec(lm) for lm in landmarks]
