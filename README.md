@@ -53,7 +53,7 @@ replay/ # Organized by algo/task with metadata.json
 
 ```bash
 # Clone the repository
-git clone https://github.com/<your-username>/aerocover.git
+git clone https://github.com/DylanRoy23/aerocover.git
 cd aerocover
 
 # Create virtual environment (recommended)
